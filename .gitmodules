@@ -1,0 +1,3 @@
+[submodule "ophis"]
+	path = ophis
+	url = git://github.com/michaelcmartin/Ophis.git

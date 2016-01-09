@@ -37,16 +37,7 @@
 .word $0000, $0000
 .word $0000, $0000
 
-; PPU Registers
-.alias PPUCTRL $2000
-.alias PPUMASK $2001
-.alias PPUSTAT $2002
-.alias PPUSCRL $2005
-.alias PPUADDR $2006
-.alias PPUDATA $2007
-
-; Data markers
-.alias data_end $ae ; End of Data
+.include "../ppu.inc"
 
 ; Text markers
 .alias text_eol $aa ; End of Line
@@ -59,12 +50,9 @@
 .alias ln_delay 2
 
 ; Memory Map for utilized RAM
-.alias zero_page    $0000
-.alias stack        $0100
 .alias ram_palettes $0200
 
 ; Zero Page Variables
-.alias longptr      $00 ; Temporary 16-bit pointer
 .alias textptr      $02 ; Pointer to the current pos. in the text
 .alias lineptr      $04 ; Pointer to the current pos. in the nametable
 .alias line_offset  $06 ; Position within the current line of text
@@ -73,67 +61,14 @@
 .alias is_attr_byte $09 ; Current attribute byte
 .alias is_color     $0a ; Current color
 .alias frame_ctr    $0b ; Frame counter for the fade effect
-.alias nmi          $0c ; Dynamic NMI Handler
 
 .org $8000
 
-;
-; Reset / Initialization Vector
-;
-reset:
-	sei ; Ensure IRQs are disabled
-	cld ; Clear D flag (since the NES doesn't support decimal mode.)
+.include "../init.asm"
 
-	; Initialize the memory that we'll be using
-	lda #0
-	ldx #$ff
-*	sta zero_page,x
-	sta stack,x
-	sta ram_palettes,x
-	dex
-	bne -
-
-	; Setup some stack space ($0100 - $01FF)
-	dex
-	txs
-
-	; Initialize the NMI handler
-	lda #$40 ; RTI opcode
-	sta nmi
-
-	; Disable the display
-	jsr disable_ppu
-
-	; Give the PPU 2 frames to warm up
-	ldx #2
-*	bit PPUSTAT
-	bpl -
-	dex
-	bne -
-
-	; Prepare palettes and clear the screen
+init:
+	; Prepare palettes and patterns
 	jsr copy_palettes_to_ram
-	jsr copy_palettes_to_ppu
-	jsr clear_nametables
-
-	; Initialize the pointer to our patterns
-	ldx #<patterns
-	stx longptr
-	ldx #>patterns
-	stx longptr+1
-
-	; Load our patterns into the pattern table
-	ldy #0
-	sty PPUADDR
-	sty PPUADDR
-*	lda (longptr),y
-	cmp #data_end
-	beq +
-	sta PPUDATA
-	inc longptr
-	bne -
-	inc longptr+1
-	bne -
 
 	; Initialize our pointer to the page text
 *	lda #<intro_pages
@@ -301,7 +236,7 @@ rotate_color:
 ;
 render_intro_screen:
 	jsr nmi_spin
-	jsr copy_palettes_to_ppu
+	jsr copy_ram_palettes_to_ppu
 
 	; Reset PPU address/scroll latches to avoid
 	; possibly generating multiple NMIs.
@@ -415,94 +350,7 @@ render_page:
 	bne ----
 *	rts
 
-;
-; NMI Handler
-;
-; This simply returns to the original calling routine,
-; disregarding the context placed on the stack by the
-; CPU.
-;
-nmi_return:
-	; Reset the PPU address latches
-	lda PPUSTAT
-
-	; Rewrite our NMI handler to simply return
-	lda #$40 ; RTI opcode
-	sta nmi
-
-	; Pop the provided context and return to the original
-	; caller.
-	pla ; CPU Status
-	pla ; IRQ Return Address (Hi)
-	pla ; IRQ Return Address (Lo)
-	rts
-
-;
-; NMI Spin
-;
-; This function sets our custom NMI handler up
-; as "jmp nmi_return" and spins until a NMI
-; occurs.
-;
-nmi_spin:
-	lda #$4c ; JMP opcode
-	sta nmi
-	lda #<nmi_return
-	sta nmi+1
-	lda #>nmi_return
-	sta nmi+2
-
-;
-; Halt the CPU
-;
-halt:
-	jmp halt
-
-;
-; Disable PPU
-;
-disable_ppu:
-	lda #0
-	sta PPUCTRL
-	sta PPUMASK
-	rts
-
-;
-; Enable PPU (BG only / NMI Enabled)
-;
-enable_ppu:
-	lda #%10001000
-	sta PPUCTRL
-	lda #%00001010
-	sta PPUMASK
-
-;
-; Reset PPU scrolling registers
-;
-reset_ppu_scroll:
-	lda #0
-	sta PPUSCRL
-	sta PPUSCRL
-	rts
-
-;
-; Clear the nametables ($2000 - $27FF)
-;
-clear_nametables:
-	ldx #$20
-	ldy #0
-*	txa
-	sta PPUADDR
-	tya
-	sta PPUADDR
-*	lda #0
-	sta PPUDATA
-	iny
-	bne -
-	inx
-	cpx #$28
-	bne --
-	rts
+.include "../ppu.asm"
 
 ;
 ; Copy palettes to RAM (so we can manipulate them)
@@ -519,7 +367,7 @@ copy_palettes_to_ram:
 ;
 ; Copy our palettes from RAM to the PPU
 ;
-copy_palettes_to_ppu:
+copy_ram_palettes_to_ppu:
 	lda #$3f
 	sta PPUADDR
 	lda #$00

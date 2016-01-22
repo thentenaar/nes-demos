@@ -148,7 +148,8 @@ fade_in:
 	sta is_attr_addr
 
 	; Palette #1 / #2
-:	lda #%01011010
+@loop:
+	lda #%01011010
 	sta is_attr_byte
 	jsr rotate_color
 
@@ -174,7 +175,7 @@ fade_in:
 
 	; Loop until we've completed the last row
 	dec num_lines
-	bpl :--
+	bpl @loop
 	rts
 
 ;
@@ -191,15 +192,17 @@ rotate_color:
 	; Start with the darkest grey
 	lda #0
 	sta is_color
-:	lda is_color
+@loop:
+	lda is_color
 	sta ram_palettes+$0b
 
+@render:
 	; Update the PPU and increment our frame counter
-:	jsr render_intro_screen
+	jsr render_intro_screen
 	inc frame_ctr
 	lda frame_ctr
 	and #$0f
-	bne :+
+	bne @darken
 
 	; Make the color one shade lighter (each 16th frame)
 	lda is_color
@@ -209,13 +212,14 @@ rotate_color:
 
 	; When we finally reach $40, we're done.
 	cmp #$40
-	bcc :--
+	bcc @loop
 	rts
 
 	; For frames 2 - 15, we make the color darker
 	; for each odd-numbered frame.
-:	lsr
-	bcc :---
+@darken:
+	lsr
+	bcc @loop
 
 	; Make the color one shade darker
 	lda ram_palettes+$0b
@@ -230,7 +234,7 @@ rotate_color:
 
 	; Store the new color and loop
 :	sta ram_palettes+$0b
-	jmp :---
+	jmp @render
 
 ;
 ; Here's where we finally send our updated
@@ -290,23 +294,24 @@ render_page:
 	lda #ln_delay
 	sta num_lines
 
+@next_byte:
 	; Load the next byte and update our pointer
-:	lda (textptr),y
+	lda (textptr),y
 	inc textptr
 	bne :+
 	inc textptr+1
 
 	; Check for space
 :	cmp #$00
-	beq :+
+	beq @next_cell
 
 	; Check for text markers
 	cmp #text_eol
-	beq :++
+	beq @skip_eol
 	cmp #text_eop
-	beq :+++
+	beq @return
 	cmp #text_eot
-	beq :+++
+	beq @return
 
 	; Set the PPU Address
 	tay
@@ -322,35 +327,38 @@ render_page:
 	ldy #0
 	sta PPUDATA
 
+@next_cell:
 	; Advance to the next cell
-:	inc line_offset
+	inc line_offset
 	lda line_offset
 	cmp #28 ; Chars per line
-	bcc :---
+	bcc @next_byte
 
+@skip_eol:
 	; Skip any leading newlines
-:	lda #62
+	lda #62
 	cmp lineptr
-	beq :----
+	beq @next_byte
 
 	; Advance to the next line
 	sty line_offset
 	lda num_lines
 	cmp #12 + ln_delay ; Lines per page
-	bcs :+
+	bcs @return
 	inc num_lines
 	lda lineptr
 	clc
 	adc #$40
 	sta lineptr
-	bcc :----
+	bcc @next_byte
 
 	; Are we at the end of the screen?
 	inc lineptr+1
 	lda lineptr+1
 	cmp #28 ; Rows per page
-	bne :----
-:	rts
+	bne @next_byte
+@return:
+	rts
 
 ;
 ; Copy palettes to RAM (so we can manipulate them)
@@ -360,7 +368,7 @@ copy_palettes_to_ram:
 :	lda palettes,x
 	sta ram_palettes,x
 	inx
-	cpx #32
+	cpx #16
 	bmi :-
 	rts
 
@@ -376,7 +384,7 @@ copy_ram_palettes_to_ppu:
 :	lda ram_palettes,x
 	sta PPUDATA
 	inx
-	cpx #32
+	cpx #16
 	bmi :-
 	rts
 
@@ -385,10 +393,6 @@ palettes:
 	.byte $02, $02, $02, $02 ; Background Palette 1
 	.byte $0f, $0f, $02, $02 ; Background Palette 2
 	.byte $0f, $00, $02, $10 ; Background Palette 3
-	.byte $02, $0f, $0f, $0f ; Sprite Palette 0
-	.byte $0f, $0f, $0f, $0f ; Sprite Palette 1
-	.byte $0f, $0f, $0f, $0f ; Sprite Palette 2
-	.byte $0f, $0f, $0f, $0f ; Sprite Palette 3
 
 patterns:
 	; Transparent tile

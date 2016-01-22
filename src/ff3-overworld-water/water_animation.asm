@@ -28,24 +28,26 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
+.segment "HEADER"
+
 ; iNES Header
 .byte "NES", $1a
 .byte $01          ; 1x 16k bank of PRG-ROM
 .byte $00          ; 0x 8k  bank of CHR-ROM (1x 8k bank of CHR-RAM)
 .byte $01          ; Vertical Mirroring / Mapper Lo: 0
 .byte $00          ; Mapper Hi: 0 (NROM)
-.word $0000, $0000
-.word $0000, $0000
+
+.code
 
 .include "../ppu.inc"
 .include "../input.inc"
 
 ; Memory Map for utilized RAM
-.alias tiles $0200
+.define tiles $0200
 
 ; Zero Page Variables
-.alias water_ctr $02 ; Frame counter for the water animation
-.alias water_dir $03 ; Water rotation direction
+.define water_ctr $02 ; Frame counter for the water animation
+.define water_dir $03 ; Water rotation direction
 
 .include "../init.asm"
 
@@ -67,14 +69,14 @@ main:
 
 	; Allow changing the rotation direaction via
 	; Left and Right on the 1st controller.
-*	jsr read_input1
+	jsr read_input1
 	lda input1_stat
 	and #BUTTON_LEFT
-	beq +
+	beq :+
 	sta water_dir
-*	lda input1_stat
+:	lda input1_stat
 	and #BUTTON_RIGHT
-	beq +
+	beq :+
 	sta water_dir
 
 	;
@@ -85,7 +87,7 @@ main:
 	; 0th frame, the pattern will be rotated
 	; in the current direction of movement.
 	;
-*	inc water_ctr
+:	inc water_ctr
 	lda water_ctr
 	cmp #17
 	bcc main
@@ -103,14 +105,14 @@ main:
 ;
 water_ror:
 	ldx #0
-*	lda tiles+1, x
+:	lda tiles+1, x
 	lsr
 	ror tiles, x
 	ror tiles+1, x
 	inx
 	inx
 	cpx #32
-	bcc -
+	bcc :-
 	jmp main
 
 ;
@@ -118,14 +120,14 @@ water_ror:
 ;
 water_rol:
 	ldx #0
-*	lda tiles, x
+:	lda tiles, x
 	asl
 	rol tiles+1, x
 	rol tiles, x
 	inx
 	inx
 	cpx #32
-	bcc -
+	bcc :-
 	jmp main
 
 ;
@@ -191,7 +193,7 @@ water_tile_index:
 copy_water_patterns_to_ram:
 	ldx #0
 	ldy #0
-*	lda patterns+16, x
+:	lda patterns+16, x
 	sta tiles, y
 	iny
 	lda patterns+32, x
@@ -199,10 +201,10 @@ copy_water_patterns_to_ram:
 	iny
 	inx
 	cpx #8
-	bcc -
+	bcc :-
 	ldx #0
 	ldy #0
-*	lda patterns+48, x
+:	lda patterns+48, x
 	sta tiles+16, y
 	iny
 	lda patterns+64, x
@@ -210,7 +212,7 @@ copy_water_patterns_to_ram:
 	iny
 	inx
 	cpx #8
-	bcc -
+	bcc :-
 	rts
 
 ;
@@ -232,31 +234,31 @@ flood_fill:
 	sty PPUADDR
 	stx PPUADDR
 	ldy #1
-*	sty PPUDATA
+:	sty PPUDATA
 	iny
 	sty PPUDATA
 	dey
 	inx
 	cpx #16  ; 32 columns
-	bcc -
+	bcc :-
 	clc
 	adc #1
 	cmp #30  ; 30 rows
-	bcs ++
+	bcs :++
 
 	; Transition from 1/2 to 3/4
 	iny
 	cpy #4
-	bpl +
+	bpl :+
 	ldy #3
 	ldx #0
-	jmp -
+	jmp :-
 
 	; Transition from 3/4 to 1/2
-*	ldy #1
+:	ldy #1
 	ldx #0
-	jmp --
-*	rts
+	jmp :--
+:	rts
 
 .include "../input.asm"
 .include "../ppu.asm"
@@ -290,12 +292,10 @@ patterns:
 
 	.byte data_end
 
-; Interrupt vector table
-.checkpc $bffa
-.advance $bffa
-.org $fffa
+.segment "VECTORS"
+	; Interrupt vector table
 	.word nmi         ; NMI Vector
 	.word reset       ; Reset Vector
 	.word reset       ; IRQ / BRK Vector
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

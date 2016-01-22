@@ -1,10 +1,15 @@
-# Top-level Makefile rules
-OPHIS=$(TOPLEVEL)/ophis/bin/ophis
+# Common Makefile rules
 BIN=$(TOPLEVEL)/bin
+LDCFG=$(TOPLEVEL)/cfg
+OBJS=${SRC:.asm=.o}
 
-all: $(BIN) $(OBJS)
+all: $(BIN)/$(DEMO).nes
 
-%.nes: %.asm
+$(BIN)/$(DEMO).nes: $(OBJS)
+	@echo "Linking $(basename $(notdir $<))..."
+	@ld65 -C $(LDCFG)/$(CFG).cfg -o $@ $<
+
+%.o: %.asm
 	@echo "Assembling $(basename $(notdir $<))..."
-	@$(OPHIS) -o $(BIN)/$@ $<
+	@ca65 -o $@ $<
 

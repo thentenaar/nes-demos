@@ -313,4 +313,4 @@ into_screen_font:
 	; End-of-Data marker
 	.byte data_end
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

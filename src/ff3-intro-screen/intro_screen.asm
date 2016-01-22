@@ -28,41 +28,41 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
+.segment "HEADER"
+
 ; iNES Header
 .byte "NES", $1a
 .byte $01          ; 1x 16k bank of PRG-ROM
 .byte $00          ; 0x 8k  bank of CHR-ROM (1x 8k bank of CHR-RAM)
 .byte $01          ; Vertical Mirroring / Mapper Lo: 0
 .byte $00          ; Mapper Hi: 0 (NROM)
-.word $0000, $0000
-.word $0000, $0000
+
+.code
 
 .include "../ppu.inc"
 
 ; Text markers
-.alias text_eol $aa ; End of Line
-.alias text_eop $ac ; End of Page
-.alias text_eot $ae ; End of Text
+.define text_eol $aa ; End of Line
+.define text_eop $ac ; End of Page
+.define text_eot $ae ; End of Text
 
 ; Delay by the time it would take the effect to
 ; be done over this number of lines before going
 ; to the next page (for readability.)
-.alias ln_delay 2
+.define ln_delay 2
 
 ; Memory Map for utilized RAM
-.alias ram_palettes $0200
+.define ram_palettes $0200
 
 ; Zero Page Variables
-.alias textptr      $02 ; Pointer to the current pos. in the text
-.alias lineptr      $04 ; Pointer to the current pos. in the nametable
-.alias line_offset  $06 ; Position within the current line of text
-.alias num_lines    $07 ; Number of lines rendered for the current page
-.alias is_attr_addr $08 ; Current attribute table address
-.alias is_attr_byte $09 ; Current attribute byte
-.alias is_color     $0a ; Current color
-.alias frame_ctr    $0b ; Frame counter for the fade effect
-
-.org $8000
+.define textptr      $02 ; Pointer to the current pos. in the text
+.define lineptr      $04 ; Pointer to the current pos. in the nametable
+.define line_offset  $06 ; Position within the current line of text
+.define num_lines    $07 ; Number of lines rendered for the current page
+.define is_attr_addr $08 ; Current attribute table address
+.define is_attr_byte $09 ; Current attribute byte
+.define is_color     $0a ; Current color
+.define frame_ctr    $0b ; Frame counter for the fade effect
 
 .include "../init.asm"
 
@@ -71,7 +71,7 @@ init:
 	jsr copy_palettes_to_ram
 
 	; Initialize our pointer to the page text
-*	lda #<intro_pages
+	lda #<intro_pages
 	sta textptr
 	lda #>intro_pages
 	sta textptr+1
@@ -146,13 +146,13 @@ fade_in:
 	sta is_attr_addr
 
 	; Palette #1 / #2
-*	lda #%01011010
+:	lda #%01011010
 	sta is_attr_byte
 	jsr rotate_color
 
 	; Are we at the last row of text?
 	dec num_lines
-	bmi +
+	bmi :+
 
 	; Palette #2 / #3
 	lda #%10101111
@@ -160,7 +160,7 @@ fade_in:
 	jsr rotate_color
 
 	; Finally, use palette #3
-*	lda #%11111111
+:	lda #%11111111
 	sta is_attr_byte
 	jsr render_intro_screen
 
@@ -172,7 +172,7 @@ fade_in:
 
 	; Loop until we've completed the last row
 	dec num_lines
-	bpl --
+	bpl :--
 	rts
 
 ;
@@ -189,15 +189,15 @@ rotate_color:
 	; Start with the darkest grey
 	lda #0
 	sta is_color
-*	lda is_color
+:	lda is_color
 	sta ram_palettes+$0b
 
 	; Update the PPU and increment our frame counter
-*	jsr render_intro_screen
+:	jsr render_intro_screen
 	inc frame_ctr
 	lda frame_ctr
 	and #$0f
-	bne +
+	bne :+
 
 	; Make the color one shade lighter (each 16th frame)
 	lda is_color
@@ -207,19 +207,19 @@ rotate_color:
 
 	; When we finally reach $40, we're done.
 	cmp #$40
-	bcc --
+	bcc :--
 	rts
 
 	; For frames 2 - 15, we make the color darker
 	; for each odd-numbered frame.
-*	lsr
-	bcc ---
+:	lsr
+	bcc :---
 
 	; Make the color one shade darker
 	lda ram_palettes+$0b
 	sec
 	sbc #$10
-	bpl +
+	bpl :+
 
 	; If our subtraction went negative, reset
 	; our color to one shade above the darkest
@@ -227,8 +227,8 @@ rotate_color:
 	lda #1
 
 	; Store the new color and loop
-*	sta ram_palettes+$0b
-	jmp ---
+:	sta ram_palettes+$0b
+	jmp :---
 
 ;
 ; Here's where we finally send our updated
@@ -251,9 +251,9 @@ render_intro_screen:
 	; Write one full row of attribute info
 	ldx #8
 	lda is_attr_byte
-*	sta PPUDATA
+:	sta PPUDATA
 	dex
-	bne -
+	bne :-
 
 	; Reset the PPU scrolling registers
 	jmp reset_ppu_scroll
@@ -289,22 +289,22 @@ render_page:
 	sta num_lines
 
 	; Load the next byte and update our pointer
-*	lda (textptr),y
+:	lda (textptr),y
 	inc textptr
-	bne +
+	bne :+
 	inc textptr+1
 
 	; Check for space
-*	cmp #$00
-	beq +
+:	cmp #$00
+	beq :+
 
 	; Check for text markers
 	cmp #text_eol
-	beq ++
+	beq :++
 	cmp #text_eop
-	beq +++
+	beq :+++
 	cmp #text_eot
-	beq +++
+	beq :+++
 
 	; Set the PPU Address
 	tay
@@ -321,34 +321,34 @@ render_page:
 	sta PPUDATA
 
 	; Advance to the next cell
-*	inc line_offset
+:	inc line_offset
 	lda line_offset
 	cmp #28 ; Chars per line
-	bcc ---
+	bcc :---
 
 	; Skip any leading newlines
-*	lda #62
+:	lda #62
 	cmp lineptr
-	beq ----
+	beq :----
 
 	; Advance to the next line
 	sty line_offset
 	lda num_lines
 	cmp #12 + ln_delay ; Lines per page
-	bcs +
+	bcs :+
 	inc num_lines
 	lda lineptr
 	clc
 	adc #$40
 	sta lineptr
-	bcc ----
+	bcc :----
 
 	; Are we at the end of the screen?
 	inc lineptr+1
 	lda lineptr+1
 	cmp #28 ; Rows per page
-	bne ----
-*	rts
+	bne :----
+:	rts
 
 .include "../ppu.asm"
 
@@ -357,11 +357,11 @@ render_page:
 ;
 copy_palettes_to_ram:
 	ldx #0
-*	lda palettes,x
+:	lda palettes,x
 	sta ram_palettes,x
 	inx
 	cpx #32
-	bmi -
+	bmi :-
 	rts
 
 ;
@@ -373,11 +373,11 @@ copy_ram_palettes_to_ppu:
 	lda #$00
 	sta PPUADDR
 	tax
-*	lda ram_palettes,x
+:	lda ram_palettes,x
 	sta PPUDATA
 	inx
 	cpx #32
-	bmi -
+	bmi :-
 	rts
 
 palettes:
@@ -400,12 +400,10 @@ intro_pages:
 	.incbin "text.bin"
 	.byte text_eot
 
-; Interrupt vector table
-.checkpc $bffa
-.advance $bffa
-.org $fffa
+.segment "VECTORS"
+	; Interrupt vector table
 	.word nmi         ; NMI Vector
 	.word reset       ; Reset Vector
 	.word reset       ; IRQ / BRK Vector
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

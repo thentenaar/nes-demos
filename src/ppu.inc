@@ -29,18 +29,18 @@
 ;
 
 ; Zero Page Variables
-.alias longptr $00 ; Temporary 16-bit pointer
-.alias nmi     $f0 ; NMI Handler
+.define longptr $00 ; Temporary 16-bit pointer
+.define nmi     $f0 ; NMI Handler
 
-; End of Data Markers
-.alias data_end $ae
+; End of Data Marker
+.define data_end $ae
 
 ; PPU Registers
-.alias PPUCTRL $2000
-.alias PPUMASK $2001
-.alias PPUSTAT $2002
-.alias PPUSCRL $2005
-.alias PPUADDR $2006
-.alias PPUDATA $2007
+.define PPUCTRL $2000
+.define PPUMASK $2001
+.define PPUSTAT $2002
+.define PPUSCRL $2005
+.define PPUADDR $2006
+.define PPUDATA $2007
 
-; vi:ft=ophis:
+; vi:ft=ca65:

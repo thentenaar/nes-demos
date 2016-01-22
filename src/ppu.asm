@@ -104,17 +104,17 @@ reset_ppu_scroll:
 clear_nametables:
 	ldx #$20
 	ldy #0
-*	txa
+:	txa
 	sta PPUADDR
 	tya
 	sta PPUADDR
-*	lda #0
+:	lda #0
 	sta PPUDATA
 	iny
-	bne -
+	bne :-
 	inx
 	cpx #$28
-	bne --
+	bne :--
 	rts
 
 ;
@@ -126,11 +126,11 @@ copy_palettes_to_ppu:
 	lda #$00
 	sta PPUADDR
 	tax
-*	lda palettes,x
+:	lda palettes,x
 	sta PPUDATA
 	inx
 	cpx #16
-	bmi -
+	bmi :-
 	rts
 
 load_patterns:
@@ -144,14 +144,14 @@ load_patterns:
 	ldy #0
 	sty PPUADDR
 	sty PPUADDR
-*	lda (longptr),y
+:	lda (longptr),y
 	cmp #data_end
-	beq +
+	beq :+
 	sta PPUDATA
 	inc longptr
-	bne -
+	bne :-
 	inc longptr+1
-	bne -
-*	rts
+	bne :-
+:	rts
 
-; vi:ft=ophis:
+; vi:ft=ca65:

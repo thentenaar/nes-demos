@@ -29,10 +29,10 @@
 ;
 
 ; Memory Map for utilized RAM
-.alias zero_page    $0000
-.alias stack        $0100
+.define zero_page    $0000
+.define stack        $0100
 
-.org $8000
+.code
 
 ;
 ; Reset / Initialization Vector
@@ -44,11 +44,11 @@ reset:
 	; Initialize the memory that we'll be using
 	lda #0
 	ldx #$ff
-*	sta zero_page,x
+:	sta zero_page,x
 	sta stack,x
 	sta $200,x
 	dex
-	bne -
+	bne :-
 
 	; Setup some stack space ($0100 - $01FF)
 	dex
@@ -63,10 +63,10 @@ reset:
 
 	; Give the PPU 2 frames to warm up
 	ldx #2
-*	bit PPUSTAT
-	bpl -
+:	bit PPUSTAT
+	bpl :-
 	dex
-	bne -
+	bne :-
 
 	; Prepare palettes and clear the screen
 	jsr copy_palettes_to_ppu
@@ -75,4 +75,4 @@ reset:
 	; Load the patterns
 	jsr load_patterns
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

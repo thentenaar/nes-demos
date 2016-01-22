@@ -62,16 +62,16 @@ read_input1:
 	; of rol.
 	;
 	ldx #8
-*	lda INPUT1
+:	lda INPUT1
 	and #3
 	cmp #1
 	rol input1_stat
 	dex
-	bne -
+	bne :-
 
 	; Restore X
 	pla
 	tax
 	rts
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

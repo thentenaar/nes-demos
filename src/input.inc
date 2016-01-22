@@ -29,13 +29,13 @@
 ;
 
 ; Zero Page Variable for controller status
-.alias input1_stat $ef
+.define input1_stat $ef
 
 ; Controller Registers
-.alias INPUT1  $4016
+.define INPUT1  $4016
 
 ; Button bit masks
-.alias BUTTON_RIGHT $01
-.alias BUTTON_LEFT  $02
+.define BUTTON_RIGHT $01
+.define BUTTON_LEFT  $02
 
-; vi:set ft=ophis:
+; vi:set ft=ca65:

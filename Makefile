@@ -2,18 +2,22 @@
 
 DEMOS = ff3-intro-screen ff3-overworld-water
 
-all: bin $(DEMOS)
+all: bin/common.a $(DEMOS)
 
 bin:
 	@mkdir -p bin
 
+bin/common.a: bin
+	@$(MAKE) -r -C src TOPLEVEL=`pwd` all
+
 ff3-intro-screen:
-	@make -r -C src/$@ TOPLEVEL=`pwd`
+	@$(MAKE) -r -C src/$@ TOPLEVEL=`pwd` all
 
 ff3-overworld-water:
-	@make -r -C src/$@ TOPLEVEL=`pwd`
+	@$(MAKE) -r -C src/$@ TOPLEVEL=`pwd` all
 
 clean: bin
-	@rm -f bin/*.nes src/*/*.o src/*.o
+	@$(MAKE) -r -C src clean
+	@$(RM) bin/common.a bin/*.nes src/*/*.o
 
 .PHONY: all clean $(DEMOS)

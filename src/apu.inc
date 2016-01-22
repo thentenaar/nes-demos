@@ -1,7 +1,7 @@
 ;
-; NES input routines
+; NES APU routines
 ;
-; Copyright (c) 2014, Tim Hentenaar
+; Copyright (c) 2016, Tim Hentenaar
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,36 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-; Controller Registers
-.define INPUT1  $4016
+; APU Registers: Pulse 1
+.define APU_P1_VOL   $4000
+.define APU_P1_SWEEP $4001
+.define APU_P1_LO    $4002
+.define APU_P1_HI    $4003
 
-; Button bit masks
-.define BUTTON_RIGHT $01
-.define BUTTON_LEFT  $02
+; APU Registers: Pulse 2
+.define APU_P2_VOL   $4004
+.define APU_P2_SWEEP $4005
+.define APU_P2_LO    $4006
+.define APU_P2_HI    $4007
+
+; APU Registers: Triangle
+.define APU_TR_CTR   $4008
+.define APU_TR_LO    $400a
+.define APU_TR_HI    $400b
+
+; APU Registers: Noise
+.define APU_N_VOL    $400c
+.define APU_N_PERIOD $400e
+.define APU_N_LENGTH $400f
+
+; APU Registers: DMC
+.define APU_DMC_CTRL $4010
+.define APU_DMC_CTR  $4011
+.define APU_DMC_ADDR $4012
+.define APU_DMC_LEN  $4013
+
+; APU Status / Frame Counter
+.define APUSTAT $4015
+.define APUFCTR $4017
 
 ; vi:set ft=ca65:

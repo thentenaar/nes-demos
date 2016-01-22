@@ -28,10 +28,6 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-; Zero Page Variables
-.define longptr $00 ; Temporary 16-bit pointer
-.define nmi     $f0 ; NMI Handler
-
 ; End of Data Marker
 .define data_end $ae
 

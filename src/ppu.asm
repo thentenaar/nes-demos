@@ -28,6 +28,20 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
+.import patterns, palettes
+.export nmi_spin, disable_ppu, enable_ppu, reset_ppu_scroll
+.export clear_nametables, copy_palettes_to_ppu, load_patterns
+
+.importzp longptr
+.exportzp nmi
+
+.zeropage
+	; NMI Handler Routine
+	nmi: .res 3
+
+.segment "COMMON"
+.include "ppu.inc"
+
 ;
 ; NMI Handler
 ;

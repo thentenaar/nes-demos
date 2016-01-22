@@ -28,6 +28,16 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
+.export read_input1
+.exportzp input1_stat
+
+.zeropage
+	; Controller 1 state
+	input1_stat: .res 1
+
+.segment "COMMON"
+.include "input.inc"
+
 ;
 ; Read the state of the 1st controller into
 ; the input1_stat bitfield which uses the

@@ -37,9 +37,23 @@
 .byte $01          ; Vertical Mirroring / Mapper Lo: 0
 .byte $00          ; Mapper Hi: 0 (NROM)
 
+.zeropage
+	textptr:      .res 2 ; Pointer to the current pos. in the text
+	lineptr:      .res 2 ; Pointer to the current pos. in the nametable
+	line_offset:  .res 1 ; Position within the current line of text
+	num_lines:    .res 1 ; Number of lines rendered for the current page
+	is_attr_addr: .res 1 ; Current attribute table address
+	is_attr_byte: .res 1 ; Current attribute byte
+	is_color:     .res 1 ; Current color
+	frame_ctr:    .res 1 ; Frame counter for the fade effect
+
 .code
 
 .include "../ppu.inc"
+
+.import enable_ppu, disable_ppu, reset_ppu_scroll, nmi_spin
+.import clear_nametables
+.export patterns, palettes
 
 ; Text markers
 .define text_eol $aa ; End of Line
@@ -53,18 +67,6 @@
 
 ; Memory Map for utilized RAM
 .define ram_palettes $0200
-
-; Zero Page Variables
-.define textptr      $02 ; Pointer to the current pos. in the text
-.define lineptr      $04 ; Pointer to the current pos. in the nametable
-.define line_offset  $06 ; Position within the current line of text
-.define num_lines    $07 ; Number of lines rendered for the current page
-.define is_attr_addr $08 ; Current attribute table address
-.define is_attr_byte $09 ; Current attribute byte
-.define is_color     $0a ; Current color
-.define frame_ctr    $0b ; Frame counter for the fade effect
-
-.include "../init.asm"
 
 init:
 	; Prepare palettes and patterns
@@ -350,8 +352,6 @@ render_page:
 	bne :----
 :	rts
 
-.include "../ppu.asm"
-
 ;
 ; Copy palettes to RAM (so we can manipulate them)
 ;
@@ -399,11 +399,5 @@ patterns:
 intro_pages:
 	.incbin "text.bin"
 	.byte text_eot
-
-.segment "VECTORS"
-	; Interrupt vector table
-	.word nmi         ; NMI Vector
-	.word reset       ; Reset Vector
-	.word reset       ; IRQ / BRK Vector
 
 ; vi:set ft=ca65:

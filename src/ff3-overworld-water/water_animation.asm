@@ -37,19 +37,24 @@
 .byte $01          ; Vertical Mirroring / Mapper Lo: 0
 .byte $00          ; Mapper Hi: 0 (NROM)
 
+.zeropage
+	; Frame counter for the water animation
+	water_ctr: .res 1
+
+	; Water rotation direction
+	water_dir: .res 1
+
 .code
 
 .include "../ppu.inc"
 .include "../input.inc"
 
+.importzp nmi, input1_stat
+.import reset, enable_ppu, reset_ppu_scroll, nmi_spin, read_input1
+.export patterns, palettes
+
 ; Memory Map for utilized RAM
 .define tiles $0200
-
-; Zero Page Variables
-.define water_ctr $02 ; Frame counter for the water animation
-.define water_dir $03 ; Water rotation direction
-
-.include "../init.asm"
 
 init:
 	; Fill the screen
@@ -260,9 +265,6 @@ flood_fill:
 	jmp :--
 :	rts
 
-.include "../input.asm"
-.include "../ppu.asm"
-
 palettes:
 	.byte $22, $22, $22, $31 ; Background Palette 0
 	.byte $0f, $0f, $0f, $0f ; Background Palette 1
@@ -291,11 +293,5 @@ patterns:
 	.byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
 
 	.byte data_end
-
-.segment "VECTORS"
-	; Interrupt vector table
-	.word nmi         ; NMI Vector
-	.word reset       ; Reset Vector
-	.word reset       ; IRQ / BRK Vector
 
 ; vi:set ft=ca65:

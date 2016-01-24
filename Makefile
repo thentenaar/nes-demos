@@ -1,6 +1,6 @@
 # Toplevel Makefile
 
-DEMOS = ff3-intro-screen ff3-overworld-water
+DEMOS = ff3-intro-screen ff3-overworld-water ff3-starfield
 
 all: bin/common.a $(DEMOS)
 
@@ -14,6 +14,9 @@ ff3-intro-screen:
 	@$(MAKE) -r -C src/$@ TOPLEVEL=`pwd` all
 
 ff3-overworld-water:
+	@$(MAKE) -r -C src/$@ TOPLEVEL=`pwd` all
+
+ff3-starfield:
 	@$(MAKE) -r -C src/$@ TOPLEVEL=`pwd` all
 
 clean: bin

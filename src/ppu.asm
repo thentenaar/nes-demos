@@ -31,6 +31,7 @@
 .import patterns, palettes
 .export nmi_spin, disable_ppu, enable_ppu, reset_ppu_scroll
 .export clear_nametables, copy_palettes_to_ppu, load_patterns
+.export enable_ppu_with_sprites, do_oam_dma
 
 .importzp longptr
 .exportzp nmi
@@ -98,7 +99,7 @@ disable_ppu:
 ; Enable PPU (BG only / NMI Enabled)
 ;
 enable_ppu:
-	lda #%10001000
+	lda #%10000000
 	sta PPUCTRL
 	lda #%00001010
 	sta PPUMASK
@@ -110,6 +111,29 @@ reset_ppu_scroll:
 	lda #0
 	sta PPUSCRL
 	sta PPUSCRL
+	rts
+
+;
+; Enable Sprites
+;
+enable_ppu_with_sprites:
+	lda #%10000000
+	sta PPUCTRL
+	lda #%00011110
+	sta PPUMASK
+	jmp reset_ppu_scroll
+
+;
+; Performa DMA transfer to the PPU's OAM.
+;
+; Inputs:
+;    X - Hi byte of the RAM page to copy from
+;
+do_oam_dma:
+	lda #0
+	sta OAMADDR
+	txa
+	sta OAMDMA
 	rts
 
 ;
@@ -141,11 +165,13 @@ copy_palettes_to_ppu:
 	sta PPUADDR
 	tax
 :	lda palettes,x
+	cmp #data_end
+	beq :+
 	sta PPUDATA
 	inx
-	cpx #16
+	cpx #32
 	bmi :-
-	rts
+:	rts
 
 load_patterns:
 	; Initialize our pointer to the patterns

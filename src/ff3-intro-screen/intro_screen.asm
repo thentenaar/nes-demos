@@ -393,6 +393,7 @@ palettes:
 	.byte $02, $02, $02, $02 ; Background Palette 1
 	.byte $0f, $0f, $02, $02 ; Background Palette 2
 	.byte $0f, $00, $02, $10 ; Background Palette 3
+	.byte data_end
 
 patterns:
 	; Transparent tile

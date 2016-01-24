@@ -49,8 +49,8 @@
 .include "../ppu.inc"
 .include "../input.inc"
 
-.importzp nmi, input1_stat
-.import reset, enable_ppu, reset_ppu_scroll, nmi_spin, read_input1
+.importzp input1_stat
+.import enable_ppu, reset_ppu_scroll, nmi_spin, read_input1
 .export patterns, palettes
 
 ; Memory Map for utilized RAM
@@ -273,6 +273,7 @@ palettes:
 	.byte $0f, $0f, $0f, $0f ; Background Palette 1
 	.byte $0f, $0f, $0f, $0f ; Background Palette 2
 	.byte $0f, $0f, $0f, $0f ; Background Palette 3
+	.byte data_end
 
 patterns:
 	; Transparent tile
@@ -294,7 +295,6 @@ patterns:
 	; Water tile #4
 	.byte $0c, $10, $7f, $c6, $7c, $ce, $03, $00
 	.byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-
 	.byte data_end
 
 ; vi:set ft=ca65:

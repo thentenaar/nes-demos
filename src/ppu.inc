@@ -35,8 +35,10 @@
 .define PPUCTRL $2000
 .define PPUMASK $2001
 .define PPUSTAT $2002
+.define OAMADDR $2003
 .define PPUSCRL $2005
 .define PPUADDR $2006
 .define PPUDATA $2007
+.define OAMDMA  $4014
 
 ; vi:ft=ca65:

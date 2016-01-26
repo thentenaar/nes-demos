@@ -239,17 +239,19 @@ flood_fill:
 	sty PPUADDR
 	stx PPUADDR
 	ldy #1
-:	sty PPUDATA
+
+@fill:
+	sty PPUDATA
 	iny
 	sty PPUDATA
 	dey
 	inx
 	cpx #16  ; 32 columns
-	bcc :-
+	bcc @fill
 	clc
 	adc #1
 	cmp #30  ; 30 rows
-	bcs :++
+	bcs @return
 
 	; Transition from 1/2 to 3/4
 	iny
@@ -257,13 +259,14 @@ flood_fill:
 	bpl :+
 	ldy #3
 	ldx #0
-	jmp :-
+	jmp @fill
 
 	; Transition from 3/4 to 1/2
 :	ldy #1
 	ldx #0
-	jmp :--
-:	rts
+	jmp @fill
+@return:
+	rts
 
 palettes:
 	.byte $22, $22, $22, $31 ; Background Palette 0

@@ -35,11 +35,14 @@
 .import __RAM_START__, __RAM_SIZE__
 
 .importzp nmi
-.exportzp longptr
+.exportzp irq, longptr
 
 .zeropage
 	; 16-bit temporary pointer
 	longptr: .res 2
+
+	; IRQ / BRK routine
+	irq:     .res 3
 
 .segment "STARTUP"
 .include "ppu.inc"
@@ -79,16 +82,10 @@ reset:
 	dex
 	txs
 
-	; Initialize the NMI handler
+	; Initialize the NMI and IRQ / BRK handlers
 	lda #$40 ; RTI opcode
 	sta nmi
-
-	; Give the PPU 2 frames to warm up
-	ldx #2
-:	bit PPUSTAT
-	bpl :-
-	dex
-	bne :-
+	sta irq
 
 	;
 	; Clear the RAM area used for BSS
@@ -109,6 +106,14 @@ reset:
 	dex
 	bne :--
 
+	; Give the PPU 2 frames to warm up
+	bit PPUSTAT
+	ldx #2
+:	bit PPUSTAT
+	bpl :-
+	dex
+	bne :-
+
 	; Prepare palettes and clear the screen
 	jsr copy_palettes_to_ppu
 	jsr clear_nametables
@@ -120,6 +125,6 @@ reset:
 	; Interrupt vector table
 	.word nmi         ; NMI Vector
 	.word reset       ; Reset Vector
-	.word reset       ; IRQ / BRK Vector
+	.word irq         ; IRQ / BRK Vector
 
 ; vi:set ft=ca65:

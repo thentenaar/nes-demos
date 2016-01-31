@@ -104,7 +104,7 @@ main:
 	bne main
 
 	; If so, we're done
-	brk
+	jmp ($fffc)
 
 ;
 ; Do the fade-in effect

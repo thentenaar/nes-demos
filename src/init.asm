@@ -92,17 +92,17 @@ reset:
 	;
 	; The size must be aligned on a page boundary.
 	;
-	lda #<__RAM_START__
+	lda #0
 	sta longptr
 	lda #>__RAM_START__
 	sta longptr+1
 	ldx #>__RAM_SIZE__
-:	lda #$ff
+:	lda #0
 	tay
-	lda #0
 :	sta (longptr),y
 	dey
 	bne :-
+	inc longptr+1
 	dex
 	bne :--
 

@@ -73,12 +73,12 @@ nmi_return:
 ; occurs.
 ;
 nmi_spin:
-	lda #$4c ; JMP opcode
-	sta nmi
 	lda #<nmi_return
 	sta nmi+1
 	lda #>nmi_return
 	sta nmi+2
+	lda #$4c ; JMP opcode
+	sta nmi
 
 ;
 ; Halt the CPU

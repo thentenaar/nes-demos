@@ -84,7 +84,7 @@ init:
 	sta multiplier_ctr
 	jsr enable_ppu_with_sprites
 
-main:
+.proc main
 	; Do the effect
 	jsr mutate_tables
 	jsr update_sprites
@@ -95,12 +95,13 @@ main:
 	ldx #>oam_shadow
 	jsr do_oam_dma
 	jmp main
+.endproc
 
 ;
 ; Generate the next state for any of the
 ; sprites that need updating.
 ;
-mutate_tables:
+.proc mutate_tables
 	ldy #0
 
 @mutate:
@@ -145,12 +146,13 @@ mutate_tables:
 	cpy #63
 	bne @mutate
 	rts
+.endproc
 
 ;
 ; Update the local OAM data to reflect the current
 ; state of the sprites.
 ;
-update_sprites:
+.proc update_sprites
 	lda #0
 	tay
 	tax
@@ -179,6 +181,7 @@ update_sprites:
 	lda #3
 	jmp @set_pattern
 :	lda #4
+
 @set_pattern:
 	sta oam_shadow, x
 	inx
@@ -202,6 +205,7 @@ update_sprites:
 	cpy #64
 	bne @next
 	rts
+.endproc
 
 ;
 ; Calculate the next position from the
@@ -212,7 +216,7 @@ update_sprites:
 ;    A - multiplier_table offset
 ;    Y - current sprite #
 ;
-calc_position:
+.proc calc_position
 	; Save registers
 	sta temp
 	tya
@@ -252,6 +256,7 @@ calc_position:
 	tay
 	lda temp
 	rts
+.endproc
 
 ;
 ; Using the multiplicand from the table,
@@ -267,7 +272,7 @@ calc_position:
 ; Output:
 ;    A - Hi-byte of the result << 1.
 ;
-mul8u:
+.proc mul8u
 	sta temp2
 	ldx #7
 	lda #0
@@ -281,6 +286,7 @@ mul8u:
 	dex
 	bne @loop
 	rts
+.endproc
 
 palettes:
 	.byte $0f, $0f, $0f, $0f ; Background Palette 0

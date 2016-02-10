@@ -81,7 +81,7 @@ init:
 ;
 ; Main loop
 ;
-main:
+.proc main
 	; Disable the PPU
 	jsr disable_ppu
 
@@ -105,6 +105,7 @@ main:
 
 	; If so, we're done
 	jmp ($fffc)
+.endproc
 
 ;
 ; Do the fade-in effect
@@ -141,7 +142,7 @@ main:
 ; Thus, only the lower half of the attribute row is
 ; used for our line of text.
 ;
-fade_in:
+.proc fade_in
 	; Set our attribute table address to point to the
 	; beginning of the attribute table.
 	lda #$c0
@@ -177,6 +178,7 @@ fade_in:
 	dec num_lines
 	bpl @loop
 	rts
+.endproc
 
 ;
 ; Rotate color #3 of palette #2
@@ -188,7 +190,7 @@ fade_in:
 ; the color by one shade, while subtracting $10 makes it
 ; one shade darker.
 ;
-rotate_color:
+.proc rotate_color
 	; Start with the darkest grey
 	lda #0
 	sta is_color
@@ -235,12 +237,13 @@ rotate_color:
 	; Store the new color and loop
 :	sta ram_palettes+$0b
 	jmp @render
+.endproc
 
 ;
 ; Here's where we finally send our updated
 ; palette and attribute data to the PPU.
 ;
-render_intro_screen:
+.proc render_intro_screen
 	jsr nmi_spin
 	jsr copy_ram_palettes_to_ppu
 
@@ -263,6 +266,7 @@ render_intro_screen:
 
 	; Reset the PPU scrolling registers
 	jmp reset_ppu_scroll
+.endproc
 
 ;
 ; Layout a page of text on the screen
@@ -278,7 +282,7 @@ render_intro_screen:
 ;
 ;   Y
 ;
-render_page:
+.proc render_page
 	; Initalize the line pointer
 	lda #$62
 	sta lineptr
@@ -357,13 +361,15 @@ render_page:
 	lda lineptr+1
 	cmp #28 ; Rows per page
 	bne @next_byte
+
 @return:
 	rts
+.endproc
 
 ;
 ; Copy palettes to RAM (so we can manipulate them)
 ;
-copy_palettes_to_ram:
+.proc copy_palettes_to_ram
 	ldx #0
 :	lda palettes,x
 	sta ram_palettes,x
@@ -371,11 +377,12 @@ copy_palettes_to_ram:
 	cpx #16
 	bmi :-
 	rts
+.endproc
 
 ;
 ; Copy our palettes from RAM to the PPU
 ;
-copy_ram_palettes_to_ppu:
+.proc copy_ram_palettes_to_ppu
 	lda #$3f
 	sta PPUADDR
 	lda #$00
@@ -387,6 +394,7 @@ copy_ram_palettes_to_ppu:
 	cpx #16
 	bmi :-
 	rts
+.endproc
 
 palettes:
 	.byte $02, $02, $02, $02 ; Background Palette 0

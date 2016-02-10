@@ -65,7 +65,7 @@ init:
 ;
 ; Main loop
 ;
-main:
+.proc main
 	; Update the patterns in PPU memory, then
 	; delay for a couple of frames.
 	jsr update_water_tiles
@@ -102,13 +102,13 @@ main:
 	; Rotate the water patterns in RAM.
 	lda water_dir
 	cmp #2
-	beq water_rol
-	jmp water_ror
+	beq @water_rol
+	bne @water_ror
 
 ;
 ; Rotate the water tiles to the right.
 ;
-water_ror:
+@water_ror:
 	ldx #0
 :	lda tiles+1, x
 	lsr
@@ -118,12 +118,12 @@ water_ror:
 	inx
 	cpx #32
 	bcc :-
-	jmp main
+	bcs main
 
 ;
 ; Rotate the water tiles to the left.
 ;
-water_rol:
+@water_rol:
 	ldx #0
 :	lda tiles, x
 	asl
@@ -133,12 +133,13 @@ water_rol:
 	inx
 	cpx #32
 	bcc :-
-	jmp main
+	bcs main
+.endproc
 
 ;
 ; Update the water tiles in the pattern table.
 ;
-update_water_tiles:
+.proc update_water_tiles
 	bit PPUADDR
 	lda water_ctr
 	asl
@@ -160,6 +161,7 @@ update_water_tiles:
 	sta PPUDATA
 	jsr reset_ppu_scroll
 	rts
+.endproc
 
 ;
 ; These are the addresses in the pattern table in
@@ -195,7 +197,7 @@ water_tile_index:
 ;
 ; tile1[0] tile2[1] tile1[1] tile2[1] ...
 ;
-copy_water_patterns_to_ram:
+.proc copy_water_patterns_to_ram
 	ldx #0
 	ldy #0
 :	lda patterns+16, x
@@ -219,6 +221,7 @@ copy_water_patterns_to_ram:
 	cpx #8
 	bcc :-
 	rts
+.endproc
 
 ;
 ; Fill the nametable with water
@@ -231,7 +234,7 @@ copy_water_patterns_to_ram:
 ; 1 2 1 2 1 2 ...
 ; 3 4 3 4 3 4 ...
 ;
-flood_fill:
+.proc flood_fill
 	bit PPUSTAT
 	ldy #$20
 	ldx #0
@@ -265,8 +268,10 @@ flood_fill:
 :	ldy #1
 	ldx #0
 	jmp @fill
+
 @return:
 	rts
+.endproc
 
 palettes:
 	.byte $22, $22, $22, $31 ; Background Palette 0

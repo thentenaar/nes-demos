@@ -31,14 +31,15 @@
 .import patterns, palettes
 .export nmi_spin, disable_ppu, enable_ppu, reset_ppu_scroll
 .export clear_nametables, copy_palettes_to_ppu, load_patterns
-.export enable_ppu_with_sprites, do_oam_dma
+.export enable_ppu_with_sprites, do_oam_dma, detect_device_type
+.export halt
 
 .importzp longptr
-.exportzp nmi
+.exportzp nmi, device_type
 
 .zeropage
-	; NMI Handler Routine
-	nmi: .res 3
+	nmi:         .res 3 ; NMI Handler Routine
+	device_type: .res 1 ; Device type
 
 .segment "COMMON"
 .include "ppu.inc"
@@ -50,7 +51,7 @@
 ; disregarding the context placed on the stack by the
 ; CPU.
 ;
-nmi_return:
+.proc nmi_return
 	; Reset the PPU address latches
 	lda PPUSTAT
 
@@ -64,6 +65,7 @@ nmi_return:
 	pla ; IRQ Return Address (Hi)
 	pla ; IRQ Return Address (Lo)
 	rts
+.endproc
 
 ;
 ; NMI Spin
@@ -72,56 +74,62 @@ nmi_return:
 ; as "jmp nmi_return" and spins until a NMI
 ; occurs.
 ;
-nmi_spin:
+.proc nmi_spin
 	lda #<nmi_return
 	sta nmi+1
 	lda #>nmi_return
 	sta nmi+2
 	lda #$4c ; JMP opcode
 	sta nmi
+.endproc
 
 ;
 ; Halt the CPU
 ;
-halt:
+.proc halt
 	jmp halt
+.endproc
 
 ;
 ; Disable PPU
 ;
-disable_ppu:
+.proc disable_ppu
 	lda #0
 	sta PPUCTRL
 	sta PPUMASK
 	rts
+.endproc
 
 ;
 ; Enable PPU (BG only / NMI Enabled)
 ;
-enable_ppu:
+.proc enable_ppu
 	lda #%10000000
 	sta PPUCTRL
 	lda #%00001010
 	sta PPUMASK
+.endproc
 
 ;
 ; Reset PPU scrolling registers
 ;
-reset_ppu_scroll:
+.proc reset_ppu_scroll
 	lda #0
 	sta PPUSCRL
 	sta PPUSCRL
 	rts
+.endproc
 
 ;
 ; Enable Sprites
 ;
-enable_ppu_with_sprites:
+.proc enable_ppu_with_sprites
 	lda #%10000000
 	sta PPUCTRL
 	lda #%00011110
 	sta PPUMASK
 	jmp reset_ppu_scroll
+.endproc
 
 ;
 ; Performa DMA transfer to the PPU's OAM.
@@ -129,17 +137,18 @@ enable_ppu_with_sprites:
 ; Inputs:
 ;    X - Hi byte of the RAM page to copy from
 ;
-do_oam_dma:
+.proc do_oam_dma
 	lda #0
 	sta OAMADDR
 	txa
 	sta OAMDMA
 	rts
+.endproc
 
 ;
 ; Clear the nametables ($2000 - $27FF)
 ;
-clear_nametables:
+.proc clear_nametables
 	ldx #$20
 	ldy #0
 :	txa
@@ -154,11 +163,12 @@ clear_nametables:
 	cpx #$28
 	bne :--
 	rts
+.endproc
 
 ;
 ; Copy our palettes to the PPU
 ;
-copy_palettes_to_ppu:
+.proc copy_palettes_to_ppu
 	lda #$3f
 	sta PPUADDR
 	lda #$00
@@ -172,8 +182,9 @@ copy_palettes_to_ppu:
 	cpx #32
 	bmi :-
 :	rts
+.endproc
 
-load_patterns:
+.proc load_patterns
 	; Initialize our pointer to the patterns
 	ldx #<patterns
 	stx longptr
@@ -193,5 +204,89 @@ load_patterns:
 	inc longptr+1
 	bne :-
 :	rts
+.endproc
+
+; Detect the type of device we're using based on
+; how long it takes to render one frame on various
+; PPU types.
+;
+; The VBLANK will occur during the
+;
+;     inc device_type
+;
+; instruction, if it didn't just occur during the
+; loop.
+;
+; After this routine, the zeropage variable
+; device_type will be set as follows:
+;
+; 0 - NTSC
+; 1 - PAL
+; 2 - Dendy
+; 3 - Unknown
+;
+.proc detect_device_type
+:	bit PPUSTAT
+	bpl :-
+
+	; 29,464 cycles
+	ldy #23
+:	ldx #$ff
+:	dex
+	bne :-
+	dey
+	bne :--
+
+	; 316 cycles
+	ldx #63
+:	dex
+	bne :-
+
+	; NTSC
+	inc device_type
+	bit PPUSTAT
+	bmi @done
+
+	; 2,563 cycles
+	ldy #2
+:	ldx #$ff
+:	dex
+	bne :-
+	dey
+	bne :--
+
+	; 891 cycles
+	ldx #178
+:	dex
+	bne :-
+
+	; PAL
+	inc device_type
+	bit PPUSTAT
+	bmi @done
+
+	; 1,282 cycles
+	ldy #1
+:	ldx #$ff
+:	dex
+	bne :-
+	dey
+	bne :--
+
+	; 921 cycles
+	ldx #184
+:	dex
+	bne :-
+
+	; Dendy
+	inc device_type
+	bit PPUSTAT
+	bmi @done
+	inc device_type
+
+@done:
+	dec device_type
+	rts
+.endproc
 
 ; vi:ft=ca65:

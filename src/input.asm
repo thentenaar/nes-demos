@@ -48,7 +48,7 @@
 ; -----------------------------------
 ; A B Select Start Up Down Left Right
 ;
-read_input1:
+.proc read_input1
 	; Save X
 	txa
 	pha
@@ -83,5 +83,6 @@ read_input1:
 	pla
 	tax
 	rts
+.endproc
 
 ; vi:set ft=ca65:

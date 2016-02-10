@@ -41,4 +41,10 @@
 .define PPUDATA $2007
 .define OAMDMA  $4014
 
+; Device types
+.define DEVICE_NTSC    0
+.define DEVICE_PAL     1
+.define DEVICE_DENDY   2
+.define DEVICE_UNKNOWN 3
+
 ; vi:ft=ca65:
